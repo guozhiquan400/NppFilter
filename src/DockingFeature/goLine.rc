@@ -1,0 +1,157 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "Window.h"
+#include "resource.h"
+/////////////////////////////////////////////////////////////////////////////
+// ����(���壬�й�) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+#pragma code_page(936)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_PLUGINGOLINE_DEMO DIALOGEX 26, 41, 223, 67
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_TOOLWINDOW | WS_EX_WINDOWEDGE
+CAPTION "Go To Line #"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
+BEGIN
+    LTEXT           "Go to line :",ID_UGO_STATIC,5,21,95,8
+    EDITTEXT        ID_GOLINE_EDIT,55,20,30,12,ES_NUMBER
+    DEFPUSHBUTTON   "&Go",IDOK,100,21,70,14,BS_NOTIFY
+END
+
+IDD_FILTER_DLG1 DIALOGEX 0, 0, 285, 493
+STYLE DS_SETFONT | DS_3DLOOK | DS_FIXEDSYS | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+EXSTYLE WS_EX_TOOLWINDOW
+CAPTION "Filter"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+CONTROL         "",IDC_FILTER_LIST,"SysListView32",LVS_REPORT | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP | LVS_SHOWSELALWAYS,7,7,271,479
+END
+
+IDD_CREATEORMODIFY_FILTER DIALOGEX 0, 0, 264, 125
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_CAPTION | WS_SYSMENU
+CAPTION "Create or Modify Filter"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,72,92,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,137,92,50,14
+    RTEXT           "Title:",IDC_STATIC,36,21,31,9
+    RTEXT           "Rule:",IDC_STATIC,36,49,31,9
+    EDITTEXT        IDC_EDIT_TITLE,72,20,137,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_FILTER_RULE,72,44,137,14,ES_AUTOHSCROLL
+    CHECKBOX        "Use Regular Expression",IDC_USE_REGEX,72,65,100,10,BS_AUTOCHECKBOX
+END
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_PLUGINGOLINE_DEMO, DIALOG
+    BEGIN
+    END
+
+    IDD_FILTER_DLG1, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 278
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 486
+    END
+
+    IDD_CREATEORMODIFY_FILTER, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 257
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 102
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_FILTER_DLG1 AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_CREATEORMODIFY_FILTER AFX_DIALOG_LAYOUT
+BEGIN
+    0,
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+    0, 0, 100, 100,
+    0, 0, 100, 100,
+    0, 0, 0, 0,
+    0, 0, 0, 0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_FILTER_ADD          BITMAP                  "bitmap1.bmp"
+
+IDB_FILTER_DEL          BITMAP                  "bitmap2.bmp"
+
+IDB_FILTER_SAVE         BITMAP                  "bitmap3.bmp"
+
+IDB_FILTER_IMPORT       BITMAP                  "bitmap4.bmp"
+
+IDB_FILTER_REFRESH      BITMAP                  "bitmap5.bmp"
+#endif    // ����(���壬�й�) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
