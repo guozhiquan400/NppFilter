@@ -105,6 +105,22 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 		case NPPN_WORDSTYLESUPDATED:
 			UpdateThemeColor();
 			break;
+		case SCN_MARGINCLICK:
+		{
+			if (notifyCode->margin == 2) {
+				UINT currentEdit;
+				::SendMessage(nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)&currentEdit);
+				HWND currentSciHandle = (0 == currentEdit) ? nppData._scintillaMainHandle : nppData._scintillaSecondHandle;
+				
+				int lineClick = (int)::SendMessage(currentSciHandle, SCI_LINEFROMPOSITION, notifyCode->position, 0);
+				int level = (int)::SendMessage(currentSciHandle, SCI_GETFOLDLEVEL, lineClick, 0);
+				
+				if (level & SC_FOLDLEVELHEADERFLAG) {
+					::SendMessage(currentSciHandle, SCI_TOGGLEFOLD, lineClick, 0);
+				}
+			}
+		}
+		break;
 		default:
 			return;
 	}
