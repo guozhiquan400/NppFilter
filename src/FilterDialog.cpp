@@ -402,27 +402,57 @@ void FilterDialog::FilterCurrentDocument()
             }
         }
     }
-    QueryPerformanceCounter(&stepEndTime);
-    double filterRulesTime = (double)(stepEndTime.QuadPart - stepStartTime.QuadPart) / frequency.QuadPart * 1000.0;
-    
-    //if (filterRules.empty()) {
-    //    ::MessageBox(_hSelf, L"没有定义任何过滤规则", L"提示", MB_OK | MB_ICONINFORMATION);
-    //    return;
-    //}
-    
-    // 首先显示所有行并清除之前的标记
-    QueryPerformanceCounter(&stepStartTime);
-    int totalLines = (int)::SendMessage(currentSciHandle, SCI_GETLINECOUNT, 0, 0);
-    ::SendMessage(currentSciHandle, SCI_SHOWLINES, 0, totalLines - 1);
-    
-    // 批量清除所有现有的隐藏标记（保留以兼容旧版本清理）
-    ::SendMessage(currentSciHandle, SCI_MARKERDELETEALL, 19, 0);
-    ::SendMessage(currentSciHandle, SCI_MARKERDELETEALL, 18, 0);
 
     if (filterRules.empty()) {
         ::MessageBox(_hSelf, L"没有定义任何过滤规则", L"提示", MB_OK | MB_ICONINFORMATION);
         return;
     }
+
+    QueryPerformanceCounter(&stepEndTime);
+    double filterRulesTime = (double)(stepEndTime.QuadPart - stepStartTime.QuadPart) / frequency.QuadPart * 1000.0;
+
+    //if (filterRules.empty()) {
+    //    ::MessageBox(_hSelf, L"没有定义任何过滤规则", L"提示", MB_OK | MB_ICONINFORMATION);
+    //    return;
+    //}
+
+    // 首先显示所有行并清除之前的标记
+    QueryPerformanceCounter(&stepStartTime);
+    int totalLines = (int)::SendMessage(currentSciHandle, SCI_GETLINECOUNT, 0, 0);
+    ::SendMessage(currentSciHandle, SCI_SHOWLINES, 0, totalLines - 1);
+
+    // 批量清除所有现有的隐藏标记（保留以兼容旧版本清理）
+    ::SendMessage(currentSciHandle, SCI_MARKERDELETEALL, 19, 0);
+    ::SendMessage(currentSciHandle, SCI_MARKERDELETEALL, 18, 0);
+
+    // 确保折叠边距可见（在纯文本模式下Notepad++可能会隐藏折叠边距）
+    int marginWidth = (int)::SendMessage(currentSciHandle, SCI_GETMARGINWIDTHN, 2, 0);
+    if (marginWidth == 0) {
+        // 如果折叠边距被隐藏，设置一个默认宽度（通常为16）
+        ::SendMessage(currentSciHandle, SCI_SETMARGINWIDTHN, 2, 16);
+    }
+    // 确保边距2用于显示折叠符号并且响应鼠标点击
+    ::SendMessage(currentSciHandle, SCI_SETMARGINTYPEN, 2, SC_MARGIN_SYMBOL);
+    ::SendMessage(currentSciHandle, SCI_SETMARGINMASKN, 2, SC_MASK_FOLDERS);
+    ::SendMessage(currentSciHandle, SCI_SETMARGINSENSITIVEN, 2, 1);
+
+    // 开启Scintilla的折叠属性
+    ::SendMessage(currentSciHandle, SCI_SETPROPERTY, (WPARAM)"fold", (LPARAM)"1");
+
+    // 显式定义折叠标记样式（加号和减号），以防在纯文本模式下未定义
+    ::SendMessage(currentSciHandle, SCI_MARKERDEFINE, SC_MARKNUM_FOLDEROPEN, SC_MARK_MINUS);
+    ::SendMessage(currentSciHandle, SCI_MARKERDEFINE, SC_MARKNUM_FOLDER, SC_MARK_PLUS);
+    ::SendMessage(currentSciHandle, SCI_MARKERDEFINE, SC_MARKNUM_FOLDERSUB, SC_MARK_EMPTY);
+    ::SendMessage(currentSciHandle, SCI_MARKERDEFINE, SC_MARKNUM_FOLDERTAIL, SC_MARK_EMPTY);
+    ::SendMessage(currentSciHandle, SCI_MARKERDEFINE, SC_MARKNUM_FOLDEREND, SC_MARK_EMPTY);
+    ::SendMessage(currentSciHandle, SCI_MARKERDEFINE, SC_MARKNUM_FOLDEROPENMID, SC_MARK_EMPTY);
+    ::SendMessage(currentSciHandle, SCI_MARKERDEFINE, SC_MARKNUM_FOLDERMIDTAIL, SC_MARK_EMPTY);
+
+    // 设置折叠标记的颜色为蓝色 (Scintilla颜色格式为BGR: 0xBBGGRR，蓝色为 0xFF0000)
+    ::SendMessage(currentSciHandle, SCI_MARKERSETFORE, SC_MARKNUM_FOLDER, 0xFF0000);
+    ::SendMessage(currentSciHandle, SCI_MARKERSETBACK, SC_MARKNUM_FOLDER, 0xFF0000);
+    ::SendMessage(currentSciHandle, SCI_MARKERSETFORE, SC_MARKNUM_FOLDEROPEN, 0xFF0000);
+    ::SendMessage(currentSciHandle, SCI_MARKERSETBACK, SC_MARKNUM_FOLDEROPEN, 0xFF0000);
     
     QueryPerformanceCounter(&stepEndTime);
     double clearMarkersTime = (double)(stepEndTime.QuadPart - stepStartTime.QuadPart) / frequency.QuadPart * 1000.0;
@@ -553,29 +583,6 @@ void FilterDialog::FilterCurrentDocument()
                 processedLines, lineProcessingTotalTime,
                 lineProcessingTime / processedLines);
     ::MessageBox(_hSelf, message, L"成功", MB_OK | MB_ICONINFORMATION);
-
-    // 确保折叠边距可见（在纯文本模式下Notepad++可能会隐藏折叠边距）
-    int marginWidth = (int)::SendMessage(currentSciHandle, SCI_GETMARGINWIDTHN, 2, 0);
-    if (marginWidth == 0) {
-        // 如果折叠边距被隐藏，设置一个默认宽度（通常为16）
-        ::SendMessage(currentSciHandle, SCI_SETMARGINWIDTHN, 2, 16);
-    }
-    // 确保边距2用于显示折叠符号并且响应鼠标点击
-    ::SendMessage(currentSciHandle, SCI_SETMARGINTYPEN, 2, SC_MARGIN_SYMBOL);
-    ::SendMessage(currentSciHandle, SCI_SETMARGINMASKN, 2, SC_MASK_FOLDERS);
-    ::SendMessage(currentSciHandle, SCI_SETMARGINSENSITIVEN, 2, 1);
-
-    // 开启Scintilla的折叠属性
-    ::SendMessage(currentSciHandle, SCI_SETPROPERTY, (WPARAM)"fold", (LPARAM)"1");
-
-    // 显式定义折叠标记样式（加号和减号），以防在纯文本模式下未定义
-    ::SendMessage(currentSciHandle, SCI_MARKERDEFINE, SC_MARKNUM_FOLDEROPEN, SC_MARK_MINUS);
-    ::SendMessage(currentSciHandle, SCI_MARKERDEFINE, SC_MARKNUM_FOLDER, SC_MARK_PLUS);
-    ::SendMessage(currentSciHandle, SCI_MARKERDEFINE, SC_MARKNUM_FOLDERSUB, SC_MARK_EMPTY);
-    ::SendMessage(currentSciHandle, SCI_MARKERDEFINE, SC_MARKNUM_FOLDERTAIL, SC_MARK_EMPTY);
-    ::SendMessage(currentSciHandle, SCI_MARKERDEFINE, SC_MARKNUM_FOLDEREND, SC_MARK_EMPTY);
-    ::SendMessage(currentSciHandle, SCI_MARKERDEFINE, SC_MARKNUM_FOLDEROPENMID, SC_MARK_EMPTY);
-    ::SendMessage(currentSciHandle, SCI_MARKERDEFINE, SC_MARKNUM_FOLDERMIDTAIL, SC_MARK_EMPTY);
 }
 
 void FilterDialog::SaveFilterRules()
