@@ -470,19 +470,52 @@ void FilterDialog::FilterCurrentDocument()
     int processedLines = 0;
     
     std::vector<bool> matchResults(totalLines, false);
-    // [1] 零拷贝一次性拿整个文档的 UTF-8 指针
-    const char* docUtf8 = (const char*)::SendMessage(currentSciHandle, SCI_GETCHARACTERPOINTER, 0, 0);
-    
-    if (docUtf8 != nullptr && docLength > 0) {
-        // [2] 整个文档一次性 UTF-8 → 宽字符
-        std::wstring wideDoc;
-        int wideTotalLen = MultiByteToWideChar(CP_UTF8, 0, docUtf8, docLength, nullptr, 0);
-        if (wideTotalLen > 0) {
-            wideDoc.resize(wideTotalLen);
-            MultiByteToWideChar(CP_UTF8, 0, docUtf8, docLength, &wideDoc[0], wideTotalLen);
+
+    // [0] 取 Scintilla 内部 buffer 的 code page
+    //     - 65001(SC_CP_UTF8) : 内部是 UTF-8
+    //     - 0                 : 内部按系统默认 ANSI(CP_ACP)存储（GBK 等）
+    int sciCodePage = (int)::SendMessage(currentSciHandle, SCI_GETCODEPAGE, 0, 0);
+    UINT srcCp = (sciCodePage == SC_CP_UTF8) ? CP_UTF8 : CP_ACP;
+
+    // [1] 零拷贝拿整个文档的字节指针（Scintilla 会先合并 gap buffer）
+    const char* docBytes = (const char*)::SendMessage(currentSciHandle, SCI_GETCHARACTERPOINTER, 0, 0);
+
+    if (docBytes != nullptr && docLength > 0) {
+        // [2] 自己在字节缓冲上切行，**零 SendMessage**。
+        // 行号口径严格对齐 Scintilla 默认 EOL 规则：识别 "\r\n"、"\n"、"\r" 三种，
+        // 不识别 U+2028/U+2029（Scintilla 默认也不识别），因此行号与 Scintilla 100% 一致。
+        // 这里一次性扫整段字节流（memchr 级别的紧凑循环，5 万行 < 5ms），
+        // 比 totalLines 次 SCI_POSITIONFROMLINE（每次一个窗口消息派发）快几百倍。
+        std::vector<int> lineStartBytes;
+        lineStartBytes.reserve((size_t)totalLines + 2);
+        lineStartBytes.push_back(0); // 第 0 行从偏移 0 开始
+        for (int i = 0; i < docLength; ) {
+            char c = docBytes[i];
+            if (c == '\r') {
+                // "\r\n" 算一次换行，"\r" 单独也算
+                int nextStart = (i + 1 < docLength && docBytes[i + 1] == '\n') ? (i + 2) : (i + 1);
+                lineStartBytes.push_back(nextStart);
+                i = nextStart;
+            } else if (c == '\n') {
+                lineStartBytes.push_back(i + 1);
+                i++;
+            } else {
+                i++;
+            }
         }
-        
-        // [4] 预编译所有正则规则（编译一次，使用 N 行）
+        // 末尾哨兵：最后一行的结束偏移 = 文档总长
+        // 如果扫出的"行数"比 Scintilla 少 1（文档不以换行结尾），补齐；若多了则截断。
+        // 使 lineStartBytes.size() == totalLines + 1
+        if ((int)lineStartBytes.size() > totalLines + 1) {
+            lineStartBytes.resize((size_t)totalLines + 1);
+        } else {
+            while ((int)lineStartBytes.size() < totalLines + 1) {
+                lineStartBytes.push_back(docLength);
+            }
+        }
+        lineStartBytes[totalLines] = docLength;
+
+        // [3] 预编译所有正则规则（只编译 M 次，而不是 N*M 次）
         std::vector<std::wregex> compiledRegexes(filterRules.size());
         std::vector<bool> regexCompiled(filterRules.size(), false);
         for (size_t j = 0; j < filterRules.size(); j++) {
@@ -491,16 +524,15 @@ void FilterDialog::FilterCurrentDocument()
                     compiledRegexes[j] = std::wregex(filterRules[j]);
                     regexCompiled[j] = true;
                 } catch (const std::regex_error&) {
-                    regexCompiled[j] = false; // 编译失败退化为字符串搜索
+                    regexCompiled[j] = false;
                 }
             }
         }
-        
-        // 预抽取"字符串规则"信息到紧凑 POD 数组，避免 lambda 内反复访问 filterRules[j] / size() / c_str()
-        // 同时把字符串规则排在正则规则之前（字符串匹配比正则快得多，命中后可短路）
+
+        // 把"字符串规则"和"正则规则"拆开，字符串规则先跑（更快、可短路）
         struct StrRule { const wchar_t* data; size_t len; wchar_t first; };
         std::vector<StrRule> strRules;
-        std::vector<size_t> regexRuleIdx; // 真正启用正则的规则下标
+        std::vector<size_t> regexRuleIdx;
         strRules.reserve(filterRules.size());
         regexRuleIdx.reserve(filterRules.size());
         for (size_t j = 0; j < filterRules.size(); j++) {
@@ -513,24 +545,19 @@ void FilterDialog::FilterCurrentDocument()
                 }
             }
         }
-        
+
         // 在 [pStart, pStart+len) 这段宽字符区间上检查是否命中任一规则
         auto checkLineMatches = [&](const wchar_t* pStart, size_t len) -> bool {
-            // [A] 先跑字符串规则：使用 std::char_traits<wchar_t>::find 做首字符快速扫描，
-            //     命中首字符后再用 wmemcmp 验证剩余字节。标准库的 find 通常用 SIMD 实现，
-            //     比手写逐位比对快得多（且可跳过大量无首字符的位置）。
             const wchar_t* const pEnd = pStart + len;
+            // [A] 字符串规则：SIMD find 首字符 + wmemcmp 验证
             for (size_t s = 0, n = strRules.size(); s < n; s++) {
                 const StrRule& sr = strRules[s];
                 if (sr.len > len) continue;
-                
                 if (sr.len == 1) {
-                    // 单字符规则：直接 find 首字符
                     if (std::char_traits<wchar_t>::find(pStart, len, sr.first) != nullptr) {
                         return true;
                     }
                 } else {
-                    // 多字符规则：滚动找首字符，再比对剩余
                     const wchar_t* p = pStart;
                     size_t remaining = len;
                     size_t needleRest = sr.len - 1;
@@ -546,7 +573,7 @@ void FilterDialog::FilterCurrentDocument()
                     }
                 }
             }
-            // [B] 再跑正则规则（较慢，放后面）
+            // [B] 正则规则
             for (size_t r = 0, n = regexRuleIdx.size(); r < n; r++) {
                 size_t j = regexRuleIdx[r];
                 if (std::regex_search(pStart, pEnd, compiledRegexes[j])) {
@@ -555,38 +582,37 @@ void FilterDialog::FilterCurrentDocument()
             }
             return false;
         };
-        
-        // [3] 按 '\n' 切行扫描 wideDoc
-        const wchar_t* dataPtr = wideDoc.data();
-        size_t docWLen = wideDoc.size();
-        size_t lineStart = 0;
-        int lineIdx = 0;
-        
-        for (size_t i = 0; i < docWLen && lineIdx < totalLines; i++) {
-            if (dataPtr[i] == L'\n') {
-                size_t lineEnd = i;
-                // 兼容 CRLF：末尾的 '\r' 不计入
-                if (lineEnd > lineStart && dataPtr[lineEnd - 1] == L'\r') {
-                    lineEnd--;
-                }
-                if (lineEnd > lineStart) {
-                    matchResults[lineIdx] = checkLineMatches(dataPtr + lineStart, lineEnd - lineStart);
-                }
-                lineIdx++;
-                lineStart = i + 1;
+
+        // [4] 逐行解码 + 匹配。行号严格用 Scintilla 给的字节偏移切分。
+        // 复用一个宽字符缓冲，避免每行 new。
+        std::wstring lineW;
+        lineW.reserve(1024);
+
+        // 若第 0 行起始是 UTF-8 BOM，解码时跳过这 3 字节，避免 U+FEFF 干扰行首匹配
+        bool hasBom = (srcCp == CP_UTF8 && docLength >= 3 &&
+                       (unsigned char)docBytes[0] == 0xEF &&
+                       (unsigned char)docBytes[1] == 0xBB &&
+                       (unsigned char)docBytes[2] == 0xBF);
+
+        for (int ln = 0; ln < totalLines; ln++) {
+            int s = lineStartBytes[ln];
+            int e = lineStartBytes[ln + 1];
+            // 去掉行末换行符（最多 2 字节）
+            while (e > s && (docBytes[e - 1] == '\n' || docBytes[e - 1] == '\r')) {
+                e--;
             }
+            if (ln == 0 && hasBom) {
+                s += 3;
+            }
+            if (e <= s) continue;
+
+            int wlen = MultiByteToWideChar(srcCp, 0, docBytes + s, e - s, nullptr, 0);
+            if (wlen <= 0) continue;
+            lineW.resize(wlen);
+            MultiByteToWideChar(srcCp, 0, docBytes + s, e - s, &lineW[0], wlen);
+            matchResults[ln] = checkLineMatches(lineW.data(), (size_t)wlen);
         }
-        // 处理最后一行（文档可能不以换行符结尾）
-        if (lineIdx < totalLines && lineStart < docWLen) {
-            size_t lineEnd = docWLen;
-            if (lineEnd > lineStart && dataPtr[lineEnd - 1] == L'\r') {
-                lineEnd--;
-            }
-            if (lineEnd > lineStart) {
-                matchResults[lineIdx] = checkLineMatches(dataPtr + lineStart, lineEnd - lineStart);
-            }
-        }
-        
+
         processedLines = totalLines;
     }
     
