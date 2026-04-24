@@ -403,10 +403,10 @@ void FilterDialog::FilterCurrentDocument()
         }
     }
 
-    if (filterRules.empty()) {
-        ::MessageBox(_hSelf, L"没有定义任何过滤规则", L"提示", MB_OK | MB_ICONINFORMATION);
-        return;
-    }
+    //if (filterRules.empty()) {
+    //    ::MessageBox(_hSelf, L"没有定义任何过滤规则", L"提示", MB_OK | MB_ICONINFORMATION);
+    //    return;
+    //}
 
     QueryPerformanceCounter(&stepEndTime);
     double filterRulesTime = (double)(stepEndTime.QuadPart - stepStartTime.QuadPart) / frequency.QuadPart * 1000.0;
@@ -457,73 +457,140 @@ void FilterDialog::FilterCurrentDocument()
     QueryPerformanceCounter(&stepEndTime);
     double clearMarkersTime = (double)(stepEndTime.QuadPart - stepStartTime.QuadPart) / frequency.QuadPart * 1000.0;
     
-    // 逐行检查并记录匹配结果
+    // ==== 批量取文本 + 整体匹配（一次 SendMessage 拿全文，零拷贝）====
+    // 关键点：
+    //   1) SCI_GETCHARACTERPOINTER 直接返回 Scintilla 内部文档 buffer 的只读 UTF-8 指针，
+    //      Scintilla 会先合并 gap 再返回，指针在不修改文档期间有效。
+    //      → 1 次 SendMessage 替代 2*totalLines 次（SCI_LINELENGTH + SCI_GETLINE）
+    //   2) 文档整体转成一份宽字符串（只转一次），替代每行各转一次带来的 API 固定开销
+    //   3) 在宽字符串上按 '\n' 切行，直接用指针+长度做匹配，不再为每行分配 wstring
+    //   4) 正则对象在循环外预编译一次，避免每行每规则重新构造 std::wregex（这是大头）
     QueryPerformanceCounter(&stepStartTime);
     int hiddenSections = 0;
     int processedLines = 0;
-    double lineProcessingTime = 0.0;
     
     std::vector<bool> matchResults(totalLines, false);
+    // [1] 零拷贝一次性拿整个文档的 UTF-8 指针
+    const char* docUtf8 = (const char*)::SendMessage(currentSciHandle, SCI_GETCHARACTERPOINTER, 0, 0);
     
-    for (int line = 0; line < totalLines; line++) {
-        LARGE_INTEGER lineStartTime, lineEndTime;
-        QueryPerformanceCounter(&lineStartTime);
+    if (docUtf8 != nullptr && docLength > 0) {
+        // [2] 整个文档一次性 UTF-8 → 宽字符
+        std::wstring wideDoc;
+        int wideTotalLen = MultiByteToWideChar(CP_UTF8, 0, docUtf8, docLength, nullptr, 0);
+        if (wideTotalLen > 0) {
+            wideDoc.resize(wideTotalLen);
+            MultiByteToWideChar(CP_UTF8, 0, docUtf8, docLength, &wideDoc[0], wideTotalLen);
+        }
         
-        int lineLength = (int)::SendMessage(currentSciHandle, SCI_LINELENGTH, line, 0);
-        bool matchesAnyRule = false;
-        
-        if (lineLength > 0) {
-            // 直接获取UTF-8文本并转换为宽字符，避免中间char数组
-            std::vector<char> lineBuffer(lineLength + 1);
-            // 先清零缓冲区，因为SCI_GETLINE不会自动添加null终止符
-            memset(lineBuffer.data(), 0, lineBuffer.size());
-            ::SendMessage(currentSciHandle, SCI_GETLINE, line, (LPARAM)lineBuffer.data());
-            
-            // 一次性转换为宽字符，使用实际长度而不是-1
-            int wideLength = MultiByteToWideChar(CP_UTF8, 0, lineBuffer.data(), lineLength, nullptr, 0);
-            if (wideLength > 0) {
-                std::wstring wideLineText(wideLength, L'\0');
-                MultiByteToWideChar(CP_UTF8, 0, lineBuffer.data(), lineLength, &wideLineText[0], wideLength);
-                
-                // 检查行是否匹配任何过滤规则
-                for (size_t j = 0; j < filterRules.size(); j++) {
-                    const auto& rule = filterRules[j];
-                    bool useRegex = useRegexFlags[j];
-                    
-                    if (useRegex) {
-                        // 使用正则表达式匹配
-                        try {
-                            std::wregex regexPattern(rule);
-                            if (std::regex_search(wideLineText, regexPattern)) {
-                                matchesAnyRule = true;
-                                break;
-                            }
-                        } catch (const std::regex_error&) {
-                            // 正则表达式错误，回退到字符串搜索
-                            if (wideLineText.find(rule) != std::wstring::npos) {
-                                matchesAnyRule = true;
-                                break;
-                            }
-                        }
-                    } else {
-                        // 使用字符串搜索
-                        if (wideLineText.find(rule) != std::wstring::npos) {
-                            matchesAnyRule = true;
-                            break;
-                        }
-                    }
+        // [4] 预编译所有正则规则（编译一次，使用 N 行）
+        std::vector<std::wregex> compiledRegexes(filterRules.size());
+        std::vector<bool> regexCompiled(filterRules.size(), false);
+        for (size_t j = 0; j < filterRules.size(); j++) {
+            if (useRegexFlags[j]) {
+                try {
+                    compiledRegexes[j] = std::wregex(filterRules[j]);
+                    regexCompiled[j] = true;
+                } catch (const std::regex_error&) {
+                    regexCompiled[j] = false; // 编译失败退化为字符串搜索
                 }
             }
         }
         
-        matchResults[line] = matchesAnyRule;
+        // 预抽取"字符串规则"信息到紧凑 POD 数组，避免 lambda 内反复访问 filterRules[j] / size() / c_str()
+        // 同时把字符串规则排在正则规则之前（字符串匹配比正则快得多，命中后可短路）
+        struct StrRule { const wchar_t* data; size_t len; wchar_t first; };
+        std::vector<StrRule> strRules;
+        std::vector<size_t> regexRuleIdx; // 真正启用正则的规则下标
+        strRules.reserve(filterRules.size());
+        regexRuleIdx.reserve(filterRules.size());
+        for (size_t j = 0; j < filterRules.size(); j++) {
+            if (useRegexFlags[j] && regexCompiled[j]) {
+                regexRuleIdx.push_back(j);
+            } else {
+                const auto& r = filterRules[j];
+                if (!r.empty()) {
+                    strRules.push_back({ r.c_str(), r.size(), r[0] });
+                }
+            }
+        }
         
-        QueryPerformanceCounter(&lineEndTime);
-        lineProcessingTime += (double)(lineEndTime.QuadPart - lineStartTime.QuadPart) / frequency.QuadPart * 1000.0;
-        processedLines++;
+        // 在 [pStart, pStart+len) 这段宽字符区间上检查是否命中任一规则
+        auto checkLineMatches = [&](const wchar_t* pStart, size_t len) -> bool {
+            // [A] 先跑字符串规则：使用 std::char_traits<wchar_t>::find 做首字符快速扫描，
+            //     命中首字符后再用 wmemcmp 验证剩余字节。标准库的 find 通常用 SIMD 实现，
+            //     比手写逐位比对快得多（且可跳过大量无首字符的位置）。
+            const wchar_t* const pEnd = pStart + len;
+            for (size_t s = 0, n = strRules.size(); s < n; s++) {
+                const StrRule& sr = strRules[s];
+                if (sr.len > len) continue;
+                
+                if (sr.len == 1) {
+                    // 单字符规则：直接 find 首字符
+                    if (std::char_traits<wchar_t>::find(pStart, len, sr.first) != nullptr) {
+                        return true;
+                    }
+                } else {
+                    // 多字符规则：滚动找首字符，再比对剩余
+                    const wchar_t* p = pStart;
+                    size_t remaining = len;
+                    size_t needleRest = sr.len - 1;
+                    const wchar_t* needleRestPtr = sr.data + 1;
+                    while (remaining >= sr.len) {
+                        const wchar_t* hit = std::char_traits<wchar_t>::find(p, remaining - needleRest, sr.first);
+                        if (!hit) break;
+                        if (wmemcmp(hit + 1, needleRestPtr, needleRest) == 0) {
+                            return true;
+                        }
+                        p = hit + 1;
+                        remaining = (size_t)(pEnd - p);
+                    }
+                }
+            }
+            // [B] 再跑正则规则（较慢，放后面）
+            for (size_t r = 0, n = regexRuleIdx.size(); r < n; r++) {
+                size_t j = regexRuleIdx[r];
+                if (std::regex_search(pStart, pEnd, compiledRegexes[j])) {
+                    return true;
+                }
+            }
+            return false;
+        };
+        
+        // [3] 按 '\n' 切行扫描 wideDoc
+        const wchar_t* dataPtr = wideDoc.data();
+        size_t docWLen = wideDoc.size();
+        size_t lineStart = 0;
+        int lineIdx = 0;
+        
+        for (size_t i = 0; i < docWLen && lineIdx < totalLines; i++) {
+            if (dataPtr[i] == L'\n') {
+                size_t lineEnd = i;
+                // 兼容 CRLF：末尾的 '\r' 不计入
+                if (lineEnd > lineStart && dataPtr[lineEnd - 1] == L'\r') {
+                    lineEnd--;
+                }
+                if (lineEnd > lineStart) {
+                    matchResults[lineIdx] = checkLineMatches(dataPtr + lineStart, lineEnd - lineStart);
+                }
+                lineIdx++;
+                lineStart = i + 1;
+            }
+        }
+        // 处理最后一行（文档可能不以换行符结尾）
+        if (lineIdx < totalLines && lineStart < docWLen) {
+            size_t lineEnd = docWLen;
+            if (lineEnd > lineStart && dataPtr[lineEnd - 1] == L'\r') {
+                lineEnd--;
+            }
+            if (lineEnd > lineStart) {
+                matchResults[lineIdx] = checkLineMatches(dataPtr + lineStart, lineEnd - lineStart);
+            }
+        }
+        
+        processedLines = totalLines;
     }
     
-    // 设置折叠级别并执行折叠
+     //设置折叠级别并执行折叠（原始稳定方案：fold level + SCI_FOLDLINE）
     for (int line = 0; line < totalLines; line++) {
         bool isMatch = matchResults[line];
         bool nextIsMatch = (line + 1 < totalLines) ? matchResults[line + 1] : true;
@@ -581,7 +648,7 @@ void FilterDialog::FilterCurrentDocument()
                 filterRulesTime,
                 clearMarkersTime,
                 processedLines, lineProcessingTotalTime,
-                lineProcessingTime / processedLines);
+                processedLines > 0 ? lineProcessingTotalTime / processedLines : 0.0);
     ::MessageBox(_hSelf, message, L"成功", MB_OK | MB_ICONINFORMATION);
 }
 
