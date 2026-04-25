@@ -35,8 +35,8 @@
     <ClInclude Include="..\src\DockingFeature\resource.h" />
     <ClInclude Include="..\src\DockingFeature\StaticDialog.h" />
     <ClInclude Include="..\src\DockingFeature\Window.h" />
-    <ClInclude Include="..\src\FilterDialog.h" />
-    <ClInclude Include="..\src\FilterResource.h" />
+    <ClInclude Include="..\src\FolderDialog.h" />
+    <ClInclude Include="..\src\FolderResource.h" />
     <ClInclude Include="..\src\Graphics.h" />
     <ClInclude Include="..\src\ImageListSet.h" />
     <ClInclude Include="..\src\menuCmdID.h" />
@@ -54,10 +54,10 @@
     <ClCompile Include="..\src\CreateRuleDialog.cpp" />
     <ClCompile Include="..\src\DockingFeature\GoToLineDlg.cpp" />
     <ClCompile Include="..\src\DockingFeature\StaticDialog.cpp" />
-    <ClCompile Include="..\src\FilterDialog.cpp" />
+    <ClCompile Include="..\src\FolderDialog.cpp" />
     <ClCompile Include="..\src\ImageListSet.cpp" />
     <ClCompile Include="..\src\NppInterface.cpp" />
-    <ClCompile Include="..\src\NppPluginDemo.cpp" />
+    <ClCompile Include="..\src\Folder.cpp" />
     <ClCompile Include="..\src\pch.cpp" />
     <ClCompile Include="..\src\PluginDefinition.cpp" />
     <ClCompile Include="..\src\ThemeRenderer.cpp" />
@@ -65,7 +65,7 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\src\DockingFeature\goLine.rc" />
-    <ResourceCompile Include="..\src\NppPluginDemo.rc" />
+    <ResourceCompile Include="..\src\Folder.rc" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\src\DockingFeature\bitmap1.bmp" />
@@ -73,13 +73,14 @@
     <Image Include="..\src\DockingFeature\bitmap3.bmp" />
     <Image Include="..\src\DockingFeature\bitmap4.bmp" />
     <Image Include="..\src\DockingFeature\bitmap5.bmp" />
+    <Image Include="..\src\DockingFeature\bitmap_funnel.ico" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{9D04DBD5-E12E-44E0-A683-6F43F21D533B}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>NppFilter</RootNamespace>
+    <RootNamespace>Folder</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>NppFilter</ProjectName>
+    <ProjectName>Folder</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -171,7 +172,7 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;NPPFILTER_EXPORTS;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_SWPRINTFS=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;FOLDER_EXPORTS;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_SWPRINTFS=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>
       </AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
@@ -187,7 +188,7 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;NPPFILTER_EXPORTS;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_SWPRINTFS=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;FOLDER_EXPORTS;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_SWPRINTFS=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <TreatWarningAsError>false</TreatWarningAsError>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -205,14 +206,14 @@
       <AdditionalDependencies>shlwapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;Comctl32.lib;Shlwapi.lib;Mpr.lib;UxTheme.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y "$(SolutionDir)build\bin\$(PlatformShortName)\$(Configuration)\" "E:\notepad-plus-plus-master\PowerEditor\visual.net\x64\Debug\plugins\NppFilter\"</Command>
+      <Command>xcopy /y "$(SolutionDir)build\bin\$(PlatformShortName)\$(Configuration)\" "E:\notepad-plus-plus-master\PowerEditor\visual.net\x64\Debug\plugins\Folder\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;NPPFILTER_EXPORTS;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_SWPRINTFS=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;FOLDER_EXPORTS;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_SWPRINTFS=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <TreatWarningAsError>true</TreatWarningAsError>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -229,7 +230,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;NPPFILTER_EXPORTS;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_SWPRINTFS=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;FOLDER_EXPORTS;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_SWPRINTFS=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>
       </AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
@@ -254,7 +255,7 @@ copy ..\readme.FIRST ..\bin\readme.FIRST</Command>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;NPPFILTER_EXPORTS;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_SWPRINTFS=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;FOLDER_EXPORTS;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_SWPRINTFS=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <TreatWarningAsError>false</TreatWarningAsError>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <LanguageStandard>stdcpp20</LanguageStandard>
@@ -268,7 +269,7 @@ copy ..\readme.FIRST ..\bin\readme.FIRST</Command>
       <ImportLibrary>$(TargetName).lib</ImportLibrary>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y "$(SolutionDir)build\bin\$(PlatformShortName)\$(Configuration)\" "E:\notepad-plus-plus-master\PowerEditor\visual.net\x64\Debug\plugins\NppFilter\"</Command>
+      <Command>xcopy /y "$(SolutionDir)build\bin\$(PlatformShortName)\$(Configuration)\" "E:\notepad-plus-plus-master\PowerEditor\visual.net\x64\Debug\plugins\Folder\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
@@ -277,7 +278,7 @@ copy ..\readme.FIRST ..\bin\readme.FIRST</Command>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;NPPFILTER_EXPORTS;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_SWPRINTFS=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;FOLDER_EXPORTS;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_SWPRINTFS=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <TreatWarningAsError>true</TreatWarningAsError>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>

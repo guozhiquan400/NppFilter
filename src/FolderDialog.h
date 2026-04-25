@@ -6,12 +6,12 @@
 constexpr INT DOCKABLE_FILTER_INDEX = 0;
 
 // FilterDialog 对话框
-class FilterDialog : public DockingDlgInterface
+class FolderDialog : public DockingDlgInterface
 {
 
 public:
-	FilterDialog();   // 标准构造函数
-	virtual ~FilterDialog();
+    FolderDialog();   // 标准构造函数
+    virtual ~FolderDialog();
 	void init(HINSTANCE hInst, HWND hParent);
 	void InitialDialog();
 	void doDialog(bool willBeShown = true);
@@ -30,17 +30,17 @@ public:
 	void UncheckAllItems();
 	void ToggleAllItems();
 	void DeleteSelectedItems();
-	void FilterCurrentDocument();
-	void SaveFilterRules();
-	void ImportFilterRules();
+	void FolderCurrentDocument();
+	void SaveFolderRules();
+	void ImportFolderRules();
 
 	// 双击事件处理方法
 	void OnItemDoubleClick(int nItemIndex);
-	void EditFilterItem(int nItemIndex);
+	void EditFolderItem(int nItemIndex);
 
 	LRESULT runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
 	static LRESULT CALLBACK wndDefaultListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam) {
-		return (((FilterDialog*)(::GetWindowLongPtr(hwnd, GWLP_USERDATA)))->runListProc(hwnd, Message, wParam, lParam));
+		return (((FolderDialog*)(::GetWindowLongPtr(hwnd, GWLP_USERDATA)))->runListProc(hwnd, Message, wParam, lParam));
 	};
 	
 protected:

@@ -1,0 +1,8 @@
+diff a/src/DockingFeature/goLine.rc b/src/DockingFeature/goLine.rc	(rejected hunks)
+@@ -1,6 +1,5 @@
+ // Microsoft Visual C++ generated resource script.
+ //
+-#include "Window.h"
+ #include "resource.h"
+ /////////////////////////////////////////////////////////////////////////////
+ // ����(���壬�й�) resources

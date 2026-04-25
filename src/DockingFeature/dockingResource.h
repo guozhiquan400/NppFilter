@@ -30,6 +30,9 @@
 #define IDB_CLOSE_UP                    138
 #define IDD_CONTAINER_DLG               139
 
+// 插件图标（用于 Dock 面板 Tab 图标、主程序工具栏等）
+#define IDI_FILTER                      201
+
 #define IDC_TAB_CONT                    1027
 #define IDC_CLIENT_TAB                  1028
 #define IDC_BTN_CAPTION                 1050

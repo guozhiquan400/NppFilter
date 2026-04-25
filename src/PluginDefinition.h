@@ -22,7 +22,7 @@
 // All difinitions of plugin interface
 //
 #include "PluginInterface.h"
-#include "FilterDialog.h"
+#include "FolderDialog.h"
 #include "CreateRuleDialog.h"
 
 //-----------------------------------------------//
@@ -63,6 +63,6 @@ bool setCommand(size_t index, TCHAR *cmdName, PFUNCPLUGINCMD pFunc, ShortcutKey 
 //
 // Your plugin command functions
 //
-void toggleFilterDialog();
+void toggleFolderDialog();
 
 #endif //PLUGINDEFINITION_H

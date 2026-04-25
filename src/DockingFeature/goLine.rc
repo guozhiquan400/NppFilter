@@ -1,9 +1,9 @@
 // Microsoft Visual C++ generated resource script.
 //
-#include "Window.h"
+#include "windows.h"
 #include "resource.h"
 /////////////////////////////////////////////////////////////////////////////
-// ï¿½ï¿½ï¿½ï¿½(ï¿½ï¿½ï¿½å£¬ï¿½Ð¹ï¿½) resources
+// ÖÐÎÄ(¼òÌå£¬ÖÐ¹ú) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)
 LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
@@ -31,7 +31,7 @@ EXSTYLE WS_EX_TOOLWINDOW
 CAPTION "Filter"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-CONTROL         "",IDC_FILTER_LIST,"SysListView32",LVS_REPORT | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP | LVS_SHOWSELALWAYS,7,7,271,479
+    CONTROL         "",IDC_FILTER_LIST,"SysListView32",LVS_REPORT | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,7,7,271,479
 END
 
 IDD_CREATEORMODIFY_FILTER DIALOGEX 0, 0, 264, 125
@@ -45,7 +45,7 @@ BEGIN
     RTEXT           "Rule:",IDC_STATIC,36,49,31,9
     EDITTEXT        IDC_EDIT_TITLE,72,20,137,14,ES_AUTOHSCROLL
     EDITTEXT        IDC_FILTER_RULE,72,44,137,14,ES_AUTOHSCROLL
-    CHECKBOX        "Use Regular Expression",IDC_USE_REGEX,72,65,100,10,BS_AUTOCHECKBOX
+    CONTROL         "Use Regular Expression",IDC_USE_REGEX,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,72,65,100,10
 END
 
 
@@ -141,7 +141,18 @@ IDB_FILTER_SAVE         BITMAP                  "bitmap3.bmp"
 IDB_FILTER_IMPORT       BITMAP                  "bitmap4.bmp"
 
 IDB_FILTER_REFRESH      BITMAP                  "bitmap5.bmp"
-#endif    // ï¿½ï¿½ï¿½ï¿½(ï¿½ï¿½ï¿½å£¬ï¿½Ð¹ï¿½) resources
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_FILTER              ICON                    "bitmap_funnel.ico"
+
+#endif    // ÖÐÎÄ(¼òÌå£¬ÖÐ¹ú) resources
 /////////////////////////////////////////////////////////////////////////////
 
 
@@ -155,3 +166,4 @@ IDB_FILTER_REFRESH      BITMAP                  "bitmap5.bmp"
 
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED
+

@@ -1,6 +1,6 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Visual C++ ÁîüÊàêÁöÑÂåÖÂê´Êñá‰ª∂„ÄÇ
-// ‰æõ goLine.rc ‰ΩøÁî®
+// Microsoft Visual C++ …˙≥…µƒ∞¸∫¨Œƒº˛°£
+// π© goLine.rc  π”√
 //
 #define SW_HIDE                         0
 #define HIDE_WINDOW                     0
@@ -402,7 +402,7 @@
 #define CF_DIF                          5
 #define IDIGNORE                        5
 #define BN_DOUBLECLICKED                5
-#define LANG_CZECK                      0x05
+#define LANG_CZECH                      0x05
 #define SUBLANG_UI_CUSTOM_DEFAULT       0x05
 #define SUBLANG_ARABIC_ALGERIA          0x05
 #define SUBLANG_BOSNIAN_BOSNIA_HERZEGOVINA_LATIN 0x05
@@ -412,6 +412,7 @@
 #define SUBLANG_GERMAN_LIECHTENSTEIN    0x05
 #define SUBLANG_SAMI_LULE_SWEDEN        0x05
 #define SUBLANG_SPANISH_COSTA_RICA      0x05
+#define LANG_CZECK                      0x05
 #define WINAPI_FAMILY_GAMES             6
 #define SW_MINIMIZE                     6
 #define VK_XBUTTON2                     0x06
@@ -799,21 +800,22 @@
 #define LANG_FULAH                      0x67
 #define LANG_PULAR                      0x67
 #define IDB_FILTER_ADD                  103
-#define IDB_FILTER_DEL                  104
-#define IDB_FILTER_SAVE                 105
-#define IDB_FILTER_IMPORT               106
-#define IDB_FILTER_REFRESH              107
-#define IDB_BITMAP2                     104
-#define IDD_CREATEORMODIFY_FILTER       104
 #define VK_NUMPAD8                      0x68
 #define LANG_HAUSA                      0x68
+#define IDB_FILTER_DEL                  104
+#define IDB_BITMAP2                     104
+#define IDD_CREATEORMODIFY_FILTER       104
 #define VK_NUMPAD9                      0x69
+#define IDB_FILTER_SAVE                 105
 #define VK_MULTIPLY                     0x6A
 #define LANG_YORUBA                     0x6a
+#define IDB_FILTER_IMPORT               106
 #define VK_ADD                          0x6B
 #define LANG_QUECHUA                    0x6b
+#define IDB_FILTER_REFRESH              107
 #define VK_SEPARATOR                    0x6C
 #define LANG_SOTHO                      0x6c
+#define IDI_FILTER                      108
 #define VK_SUBTRACT                     0x6D
 #define LANG_BASHKIR                    0x6d
 #define VK_DECIMAL                      0x6E
@@ -1627,7 +1629,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        108
+#define _APS_NEXT_RESOURCE_VALUE        109
 #define _APS_NEXT_COMMAND_VALUE         40001
 #define _APS_NEXT_CONTROL_VALUE         1002
 #define _APS_NEXT_SYMED_VALUE           101

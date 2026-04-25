@@ -1,12 +1,13 @@
-﻿// FilterDialog.cpp: 实现文件
+﻿// FolderDialog.cpp: 实现文件
 //
 #include <winsock2.h>
-#include "FilterDialog.h"
+#include "FolderDialog.h"
 #include "DockingFeature/resource.h"
+#include "DockingFeature/dockingResource.h"  // for IDI_FILTER
 #include "ThemeRenderer.h"
 #include <windows.h>    // 包含Windows API头文件
 #include <commctrl.h>   // 包含ListCtrl API宏定义（如ListView_InsertItem等）
-#include "FilterResource.h"
+#include "FolderResource.h"
 #include "CreateRuleDialog.h"
 #include <string>
 #include <vector>
@@ -18,8 +19,8 @@
 extern CreateRuleDialog createRuleDlg;
 extern NppData nppData;
 
-// FilterDialog 对话框
-FilterDialog::FilterDialog()
+// FolderDialog 对话框
+FolderDialog::FolderDialog()
     : DockingDlgInterface(IDD_FILTER_DLG1)
     , _bStartupFinish(FALSE)
     , _hListCtrl(nullptr)
@@ -28,12 +29,12 @@ FilterDialog::FilterDialog()
 
 }
 
-FilterDialog::~FilterDialog()
+FolderDialog::~FolderDialog()
 {
 }
 
 
-void FilterDialog::init(HINSTANCE hInst, HWND hParent)
+void FolderDialog::init(HINSTANCE hInst, HWND hParent)
 {
     DockingDlgInterface::init(hInst, hParent);
 }
@@ -46,7 +47,7 @@ ToolBarButtonUnit toolBarIcons[] = {
     {IDM_EX_REFRESH,       IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDB_FILTER_REFRESH,    0},
 };
 
-void FilterDialog::InitialDialog()
+void FolderDialog::InitialDialog()
 {
     /* get handle of dialogs */
     _hListCtrl = ::GetDlgItem(_hSelf, IDC_FILTER_LIST);
@@ -66,13 +67,13 @@ void FilterDialog::InitialDialog()
     _Rebar.setIDVisible(REBAR_BAR_TOOLBAR, true);
 }
 
-void FilterDialog::InitializeListWithCheckboxes()
+void FolderDialog::InitializeListWithCheckboxes()
 {
     // 添加列 - 使用Windows API
     LVCOLUMN lvc;
     lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
     
-lvc.iSubItem = 0;
+    lvc.iSubItem = 0;
     lvc.pszText = (LPWSTR)L"选择";
     lvc.cx = 60;
     lvc.fmt = LVCFMT_LEFT;
@@ -95,24 +96,16 @@ lvc.iSubItem = 0;
     lvc.cx = 60;
     lvc.fmt = LVCFMT_CENTER;
     ListView_InsertColumn(_hListCtrl, 3, &lvc);
-    
-    // 样式已经在initDialog2方法中设置，包含LVS_EX_CHECKBOXES | LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES
-    // 不需要重复设置
-    
-    // 添加示例数据
-    //AddItemWithCheckbox((LPWSTR)L"file1.txt", (LPWSTR)L"1.2 KB", (LPWSTR)L"文本文件");
-    //AddItemWithCheckbox((LPWSTR)L"image.jpg", (LPWSTR)L"2.5 MB", (LPWSTR)L"图像文件");
-    //AddItemWithCheckbox((LPWSTR)L"document.pdf", (LPWSTR)L"3.1 MB", (LPWSTR)L"PDF文档");
 }
 
 
 
-BOOL FilterDialog::IsItemChecked(int nIndex)
+BOOL FolderDialog::IsItemChecked(int nIndex)
 {
     return ListView_GetCheckState(_hListCtrl, nIndex);
 }
 
-void FilterDialog::OnCheckboxChanged(int nItemIndex)
+void FolderDialog::OnCheckboxChanged(int nItemIndex)
 {
     BOOL bChecked = ListView_GetCheckState(_hListCtrl, nItemIndex);
     
@@ -128,7 +121,7 @@ void FilterDialog::OnCheckboxChanged(int nItemIndex)
     }
 }
 
-void FilterDialog::CheckAllItems()
+void FolderDialog::CheckAllItems()
 {
     int itemCount = ListView_GetItemCount(_hListCtrl);
     for (int i = 0; i < itemCount; i++) {
@@ -136,7 +129,7 @@ void FilterDialog::CheckAllItems()
     }
 }
 
-void FilterDialog::UncheckAllItems()
+void FolderDialog::UncheckAllItems()
 {
     int itemCount = ListView_GetItemCount(_hListCtrl);
     for (int i = 0; i < itemCount; i++) {
@@ -144,7 +137,7 @@ void FilterDialog::UncheckAllItems()
     }
 }
 
-void FilterDialog::ToggleAllItems()
+void FolderDialog::ToggleAllItems()
 {
     int itemCount = ListView_GetItemCount(_hListCtrl);
     for (int i = 0; i < itemCount; i++) {
@@ -153,7 +146,7 @@ void FilterDialog::ToggleAllItems()
     }
 }
 
-void FilterDialog::AddItemWithCheckbox(const wchar_t* filterName, const wchar_t* filterRule, bool useRegex)
+void FolderDialog::AddItemWithCheckbox(const wchar_t* folderName, const wchar_t* folderRule, bool useRegex)
 {
     int nIndex = ListView_GetItemCount(_hListCtrl);
     
@@ -167,15 +160,15 @@ void FilterDialog::AddItemWithCheckbox(const wchar_t* filterName, const wchar_t*
     ListView_InsertItem(_hListCtrl, &lvi);
     
     // 设置其他列的数据
-    ListView_SetItemText(_hListCtrl, nIndex, 1, (LPTSTR)filterName);
-    ListView_SetItemText(_hListCtrl, nIndex, 2, (LPTSTR)filterRule);
+    ListView_SetItemText(_hListCtrl, nIndex, 1, (LPTSTR)folderName);
+    ListView_SetItemText(_hListCtrl, nIndex, 2, (LPTSTR)folderRule);
     ListView_SetItemText(_hListCtrl, nIndex, 3, (LPTSTR)(useRegex ? L"1" : L"0"));
     
     // 默认选中该项
     ListView_SetCheckState(_hListCtrl, nIndex, TRUE);
 }
 
-void FilterDialog::DeleteSelectedItems()
+void FolderDialog::DeleteSelectedItems()
 {
     int itemCount = ListView_GetItemCount(_hListCtrl);
     
@@ -187,35 +180,25 @@ void FilterDialog::DeleteSelectedItems()
     }
 }
 
-void FilterDialog::doDialog(bool willBeShown)
+void FolderDialog::doDialog(bool willBeShown)
 {
     if (!isCreated()) {
         // define the default docking behaviour
         tTbData data{};
         create(&data);
-        data.pszName = L"Filter";
+        data.pszName = L"Folder";
         data.dlgID = DOCKABLE_FILTER_INDEX;
         data.uMask = DWS_DF_CONT_LEFT | DWS_ADDINFO | DWS_ICONTAB;
-        //data.hIconTab = (HICON)::LoadImage(_hInst, MAKEINTRESOURCE(IDI_EXPLORE), IMAGE_ICON, 0, 0, LR_LOADMAP3DCOLORS | LR_LOADTRANSPARENT);
+        data.hIconTab = (HICON)::LoadImage(_hInst, MAKEINTRESOURCE(IDI_FILTER), IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
         data.pszModuleName = getPluginFileName();
 
         ThemeRenderer::Instance().Register(_hSelf);
         ::SendMessage(_hParent, NPPM_DMMREGASDCKDLG, 0, (LPARAM)&data);
     }
-    //else if (willBeShown) {
-    //    if (_pExProp->bAutoUpdate == TRUE) {
-    //        ::KillTimer(_hSelf, EXT_UPDATEACTIVATE);
-    //        ::SetTimer(_hSelf, EXT_UPDATEACTIVATE, 0, nullptr);
-    //    }
-    //    else {
-    //        ::KillTimer(_hSelf, EXT_UPDATEACTIVATEPATH);
-    //        ::SetTimer(_hSelf, EXT_UPDATEACTIVATEPATH, 0, nullptr);
-    //    }
-    //}
     display(willBeShown);
 }
 
-INT_PTR CALLBACK FilterDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK FolderDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam)
 {
     switch (Message) {
     case WM_INITDIALOG: {
@@ -224,10 +207,6 @@ INT_PTR CALLBACK FilterDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM l
         break;
     }
     case WM_COMMAND: {
-        //if (((HWND)lParam == _hFilter) && (HIWORD(wParam) == CBN_SELCHANGE)) {
-        //    ::SendMessage(_hSelf, EXM_CHANGECOMBO, 0, 0);
-        //    return TRUE;
-        //}
         if ((HWND)lParam == _ToolBar.getHSelf()) {
             tb_cmd(LOWORD(wParam));
             return TRUE;
@@ -279,7 +258,7 @@ INT_PTR CALLBACK FilterDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM l
     }
 }
 
-void FilterDialog::tb_cmd(WPARAM message)
+void FolderDialog::tb_cmd(WPARAM message)
 {
     switch (message) {
     case IDM_EX_ADD:
@@ -291,30 +270,30 @@ void FilterDialog::tb_cmd(WPARAM message)
             
             // 添加到ListCtrl中
             AddItemWithCheckbox(title, rule, false);
-            FilterCurrentDocument();
+            FolderCurrentDocument();
         }
         break;
     case IDM_EX_DEL:
         // 删除选中的项
         DeleteSelectedItems();
-        FilterCurrentDocument();
+        FolderCurrentDocument();
         break;
     case IDM_EX_SAVEFILTER:
         // 保存过滤规则到文件
-        SaveFilterRules();
+        SaveFolderRules();
         break;
     case IDM_EX_IMPORTFILTER:
         // 从文件导入过滤规则
-        ImportFilterRules();
+        ImportFolderRules();
         break;
     case IDM_EX_REFRESH:
         // 刷新当前文档过滤
-        FilterCurrentDocument();
+        FolderCurrentDocument();
         break;
     }
 }
 
-void FilterDialog::UpdateLayout()
+void FolderDialog::UpdateLayout()
 {
     RECT rc = { 0 };
     RECT rcBuff = { 0 };
@@ -333,7 +312,7 @@ void FilterDialog::UpdateLayout()
     ::SetWindowPos(_hListCtrl, nullptr, rc.left, rc.top, rc.right, rc.bottom, SWP_NOZORDER | SWP_SHOWWINDOW);
 }
 
-void FilterDialog::redraw()
+void FolderDialog::redraw()
 {
     UpdateLayout();
 }
@@ -341,12 +320,12 @@ void FilterDialog::redraw()
 /****************************************************************************
  * Message handling of tree
  */
-LRESULT FilterDialog::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
+LRESULT FolderDialog::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
     return ::CallWindowProc(_hDefaultListProc, hwnd, Message, wParam, lParam);
 }
 
-void FilterDialog::FilterCurrentDocument()
+void FolderDialog::FolderCurrentDocument()
 {
     // 高精度计时器变量
     LARGE_INTEGER frequency, startTime, endTime, stepStartTime, stepEndTime;
@@ -381,7 +360,7 @@ void FilterDialog::FilterCurrentDocument()
     // 获取所有勾选的过滤规则
     QueryPerformanceCounter(&stepStartTime);
     int itemCount = ListView_GetItemCount(_hListCtrl);
-    std::vector<std::wstring> filterRules;
+    std::vector<std::wstring> folderRules;
     std::vector<bool> useRegexFlags;
     
     for (int i = 0; i < itemCount; i++) {
@@ -397,24 +376,15 @@ void FilterDialog::FilterCurrentDocument()
                 ListView_GetItemText(_hListCtrl, i, 3, useRegexStr, 10);
                 useRegex = (wcscmp(useRegexStr, L"1") == 0);
                 
-                filterRules.push_back(std::wstring(ruleText));
+                folderRules.push_back(std::wstring(ruleText));
                 useRegexFlags.push_back(useRegex);
             }
         }
     }
 
-    //if (filterRules.empty()) {
-    //    ::MessageBox(_hSelf, L"没有定义任何过滤规则", L"提示", MB_OK | MB_ICONINFORMATION);
-    //    return;
-    //}
 
     QueryPerformanceCounter(&stepEndTime);
-    double filterRulesTime = (double)(stepEndTime.QuadPart - stepStartTime.QuadPart) / frequency.QuadPart * 1000.0;
-
-    //if (filterRules.empty()) {
-    //    ::MessageBox(_hSelf, L"没有定义任何过滤规则", L"提示", MB_OK | MB_ICONINFORMATION);
-    //    return;
-    //}
+    double folderRulesTime = (double)(stepEndTime.QuadPart - stepStartTime.QuadPart) / frequency.QuadPart * 1000.0;
 
     // 首先显示所有行并清除之前的标记
     QueryPerformanceCounter(&stepStartTime);
@@ -516,12 +486,12 @@ void FilterDialog::FilterCurrentDocument()
         lineStartBytes[totalLines] = docLength;
 
         // [3] 预编译所有正则规则（只编译 M 次，而不是 N*M 次）
-        std::vector<std::wregex> compiledRegexes(filterRules.size());
-        std::vector<bool> regexCompiled(filterRules.size(), false);
-        for (size_t j = 0; j < filterRules.size(); j++) {
+        std::vector<std::wregex> compiledRegexes(folderRules.size());
+        std::vector<bool> regexCompiled(folderRules.size(), false);
+        for (size_t j = 0; j < folderRules.size(); j++) {
             if (useRegexFlags[j]) {
                 try {
-                    compiledRegexes[j] = std::wregex(filterRules[j]);
+                    compiledRegexes[j] = std::wregex(folderRules[j]);
                     regexCompiled[j] = true;
                 } catch (const std::regex_error&) {
                     regexCompiled[j] = false;
@@ -533,13 +503,13 @@ void FilterDialog::FilterCurrentDocument()
         struct StrRule { const wchar_t* data; size_t len; wchar_t first; };
         std::vector<StrRule> strRules;
         std::vector<size_t> regexRuleIdx;
-        strRules.reserve(filterRules.size());
-        regexRuleIdx.reserve(filterRules.size());
-        for (size_t j = 0; j < filterRules.size(); j++) {
+        strRules.reserve(folderRules.size());
+        regexRuleIdx.reserve(folderRules.size());
+        for (size_t j = 0; j < folderRules.size(); j++) {
             if (useRegexFlags[j] && regexCompiled[j]) {
                 regexRuleIdx.push_back(j);
             } else {
-                const auto& r = filterRules[j];
+                const auto& r = folderRules[j];
                 if (!r.empty()) {
                     strRules.push_back({ r.c_str(), r.size(), r[0] });
                 }
@@ -671,18 +641,18 @@ void FilterDialog::FilterCurrentDocument()
                 hiddenSections,
                 totalTime,
                 stepTime,
-                filterRulesTime,
+                folderRulesTime,
                 clearMarkersTime,
                 processedLines, lineProcessingTotalTime,
                 processedLines > 0 ? lineProcessingTotalTime / processedLines : 0.0);
     ::MessageBox(_hSelf, message, L"成功", MB_OK | MB_ICONINFORMATION);
 }
 
-void FilterDialog::SaveFilterRules()
+void FolderDialog::SaveFolderRules()
 {
     // 弹出保存文件对话框
     OPENFILENAME ofn;
-    wchar_t szFile[260] = L"filter_rules.txt";
+    wchar_t szFile[260] = L"folder_rules.txt";
     
     ZeroMemory(&ofn, sizeof(ofn));
     ofn.lStructSize = sizeof(ofn);
@@ -712,23 +682,23 @@ void FilterDialog::SaveFilterRules()
         }
         
         // 写入文件头
-        const char* header = "# Filter Rules Export\r\n# Format: FilterName|FilterRule|UseRegex\r\n";
+        const char* header = "# Folder Rules Export\r\n# Format: FolderName|FolderRule|UseRegex\r\n";
         DWORD bytesWritten;
         WriteFile(hFile, header, (DWORD)strlen(header), &bytesWritten, NULL);
         
         // 写入每个过滤规则
         for (int i = 0; i < itemCount; i++) {
-            wchar_t filterName[256];
-            wchar_t filterRule[256];
+            wchar_t folderName[256];
+            wchar_t folderRule[256];
             wchar_t useRegexStr[10];
             
-            ListView_GetItemText(_hListCtrl, i, 1, filterName, 256);
-            ListView_GetItemText(_hListCtrl, i, 2, filterRule, 256);
+            ListView_GetItemText(_hListCtrl, i, 1, folderName, 256);
+            ListView_GetItemText(_hListCtrl, i, 2, folderRule, 256);
             ListView_GetItemText(_hListCtrl, i, 3, useRegexStr, 10);
             
             // 转换为UTF-8格式写入
-            int nameLen = WideCharToMultiByte(CP_UTF8, 0, filterName, -1, NULL, 0, NULL, NULL);
-            int ruleLen = WideCharToMultiByte(CP_UTF8, 0, filterRule, -1, NULL, 0, NULL, NULL);
+            int nameLen = WideCharToMultiByte(CP_UTF8, 0, folderName, -1, NULL, 0, NULL, NULL);
+            int ruleLen = WideCharToMultiByte(CP_UTF8, 0, folderRule, -1, NULL, 0, NULL, NULL);
             int regexLen = WideCharToMultiByte(CP_UTF8, 0, useRegexStr, -1, NULL, 0, NULL, NULL);
             
             if (nameLen > 0 && ruleLen > 0) {
@@ -736,8 +706,8 @@ void FilterDialog::SaveFilterRules()
                 std::vector<char> ruleBuffer(ruleLen);
                 std::vector<char> regexBuffer(regexLen);
                 
-                WideCharToMultiByte(CP_UTF8, 0, filterName, -1, nameBuffer.data(), nameLen, NULL, NULL);
-                WideCharToMultiByte(CP_UTF8, 0, filterRule, -1, ruleBuffer.data(), ruleLen, NULL, NULL);
+                WideCharToMultiByte(CP_UTF8, 0, folderName, -1, nameBuffer.data(), nameLen, NULL, NULL);
+                WideCharToMultiByte(CP_UTF8, 0, folderRule, -1, ruleBuffer.data(), ruleLen, NULL, NULL);
                 WideCharToMultiByte(CP_UTF8, 0, useRegexStr, -1, regexBuffer.data(), regexLen, NULL, NULL);
                 
                 std::string line = std::string(nameBuffer.data()) + "|" + std::string(ruleBuffer.data()) + "|" + std::string(regexBuffer.data()) + "\r\n";
@@ -753,7 +723,7 @@ void FilterDialog::SaveFilterRules()
     }
 }
 
-void FilterDialog::ImportFilterRules()
+void FolderDialog::ImportFolderRules()
 {
     // 弹出打开文件对话框
     OPENFILENAME ofn;
@@ -816,7 +786,7 @@ void FilterDialog::ImportFilterRules()
                 line.pop_back();
             }
             
-            // 解析格式：FilterName|FilterRule|UseRegex（兼容老格式FilterName|FilterRule）
+            // 解析格式：FolderName|FolderRule|UseRegex（兼容老格式FolderName|FolderRule）
             size_t firstPos = line.find('|');
             if (firstPos != std::string::npos) {
                 std::string nameStr = line.substr(0, firstPos);
@@ -827,11 +797,11 @@ void FilterDialog::ImportFilterRules()
                 std::string useRegexStr = "0"; // 默认不使用正则表达式
                 
                 if (secondPos != std::string::npos) {
-                    // 新格式：FilterName|FilterRule|UseRegex
+                    // 新格式：FolderName|FolderRule|UseRegex
                     ruleStr = line.substr(firstPos + 1, secondPos - firstPos - 1);
                     useRegexStr = line.substr(secondPos + 1);
                 } else {
-                    // 老格式：FilterName|FilterRule
+                    // 老格式：FolderName|FolderRule
                     ruleStr = line.substr(firstPos + 1);
                 }
                 
@@ -857,32 +827,32 @@ void FilterDialog::ImportFilterRules()
                 }
             }
         }
-        FilterCurrentDocument();
+        FolderCurrentDocument();
         wchar_t message[256];
         swprintf_s(message, L"成功导入 %d 个过滤规则", importedCount);
         MessageBox(_hSelf, message, L"导入成功", MB_OK | MB_ICONINFORMATION);
     }
 }
 
-// FilterDialog 消息处理程序
+// FolderDialog 消息处理程序
 
-void FilterDialog::OnItemDoubleClick(int nItemIndex)
+void FolderDialog::OnItemDoubleClick(int nItemIndex)
 {
-    EditFilterItem(nItemIndex);
+    EditFolderItem(nItemIndex);
 }
 
-void FilterDialog::EditFilterItem(int nItemIndex)
+void FolderDialog::EditFolderItem(int nItemIndex)
 {
     if (nItemIndex < 0 || nItemIndex >= ListView_GetItemCount(_hListCtrl)) {
         return;
     }
     
     // 获取当前选中项的数据
-    wchar_t filterName[256];
-    wchar_t filterRule[256];
+    wchar_t folderName[256];
+    wchar_t folderRule[256];
     
-    ListView_GetItemText(_hListCtrl, nItemIndex, 1, filterName, 256);
-    ListView_GetItemText(_hListCtrl, nItemIndex, 2, filterRule, 256);
+    ListView_GetItemText(_hListCtrl, nItemIndex, 1, folderName, 256);
+    ListView_GetItemText(_hListCtrl, nItemIndex, 2, folderRule, 256);
     
     // 获取正则表达式选项（从第4列，索引3）
     wchar_t useRegexStr[10];
@@ -891,7 +861,7 @@ void FilterDialog::EditFilterItem(int nItemIndex)
     useRegex = (wcscmp(useRegexStr, L"1") == 0);
     
     // 设置编辑对话框的初始值
-    createRuleDlg.SetInitialValues(filterName, filterRule, useRegex);
+    createRuleDlg.SetInitialValues(folderName, folderRule, useRegex);
     
     // 显示编辑对话框
     if (createRuleDlg.doDialog() == IDOK) {
@@ -906,6 +876,6 @@ void FilterDialog::EditFilterItem(int nItemIndex)
         ListView_SetItemText(_hListCtrl, nItemIndex, 3, (LPTSTR)(newUseRegex ? L"1" : L"0"));
         
         // 重新过滤当前文档
-        FilterCurrentDocument();
+        FolderCurrentDocument();
     }
 }

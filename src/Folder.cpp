@@ -26,10 +26,10 @@ FuncItem funcItem[nbFunc];
 NppData nppData;
 
 HINSTANCE  g_hInst = nullptr;
-FilterDialog filterDialog;
+FolderDialog folderDialog;
 CreateRuleDialog createRuleDlg;
 
-const TCHAR NPP_PLUGIN_NAME[] = TEXT("Filter");
+const TCHAR NPP_PLUGIN_NAME[] = TEXT("Folder");
 
 void UpdateThemeColor();
 
@@ -69,9 +69,9 @@ extern "C" __declspec(dllexport) void setInfo(NppData notpadPlusData)
 	nppData = notpadPlusData;
 	commandMenuInit();
 	UpdateThemeColor();
-	filterDialog.init(g_hInst, nppData._nppHandle);
+	folderDialog.init(g_hInst, nppData._nppHandle);
 	createRuleDlg.init(g_hInst, nppData._nppHandle);
-	filterDialog.VisibleChanged([](bool visible) {
+	folderDialog.VisibleChanged([](bool visible) {
 		::SendMessage(nppData._nppHandle, NPPM_SETMENUITEMCHECK, funcItem[DOCKABLE_FILTER_INDEX]._cmdID, (LPARAM)visible);
 	});
 }
@@ -99,7 +99,7 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 		break;
 
 		case NPPN_READY:
-			filterDialog.initFinish();
+			folderDialog.initFinish();
 			UpdateThemeColor();
 			break;
 		case NPPN_WORDSTYLESUPDATED:
